@@ -1,0 +1,99 @@
+@startuml Kinobezdna Container Diagram
+
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title To-Be Архитектура системы "Кинобездна" - Диаграмма контейнеров C4
+
+Person(user, "Пользователь", "Смотрит фильмы через веб, мобильное приложение или Smart TV")
+
+System_Boundary(clients, "Клиентские приложения") {
+    Container(web_app, "Web Application", "React", "Веб-интерфейс для пользователей")
+    Container(mobile_app, "Mobile App", "React Native", "Мобильное приложение")
+    Container(tv_app, "Smart TV App", "React", "Приложение для Smart TV")
+}
+
+System_Boundary(kb_system, "Кинобездна - Backend") {
+    Container(api_gateway, "API Gateway", "Kong/Nginx", "Единая точка входа для всех API запросов, маршрутизация, rate limiting")
+
+    ' User Domain
+    Container(auth_service, "Auth Service", "Go", "Аутентификация и авторизация пользователей")
+    Container(user_profile_service, "User Profile Service", "Go", "Управление профилями пользователей")
+    ContainerDb(user_db, "User Database", "PostgreSQL", "Хранение данных пользователей и профилей")
+
+    ' Content Domain
+    Container(content_service, "Content Service", "Go", "Управление видео контентом и метаданными")
+    ContainerDb(content_db, "Content Database", "PostgreSQL", "Хранение метаданных о фильмах")
+    ContainerDb(video_storage, "Video Storage", "S3/MinIO", "Хранение видеофайлов")
+
+    ' Payment Domain
+    Container(payment_service, "Payment Service", "Go", "Обработка платежей и подписок")
+    ContainerDb(payment_db, "Payment Database", "PostgreSQL", "Хранение платежей и подписок")
+
+    ' Recommendation Domain
+    Container(recommendation_service, "Recommendation Service", "Go", "Генерация персональных рекомендаций")
+    ContainerDb(recommendation_db, "Recommendation DB", "Redis + ClickHouse", "Кэш рекомендаций и аналитика просмотров")
+
+    ' Notification Domain
+    Container(notification_service, "Notification Service", "Go", "Отправка уведомлений пользователям")
+    ContainerDb(notification_db, "Notification DB", "PostgreSQL", "Шаблоны и история уведомлений")
+
+    ' Loyalty Domain
+    Container(loyalty_service, "Loyalty Service", "Go", "Программа лояльности и скидки")
+    ContainerDb(loyalty_db, "Loyalty Database", "PostgreSQL", "Баллы и история лояльности")
+
+    ' Event Bus
+    Container(kafka, "Event Bus", "Apache Kafka", "Асинхронная коммуникация между сервисами")
+}
+
+' External Systems
+System_Ext(cdn, "CDN", "Доставка видеоконтента пользователям")
+System_Ext(recommendation_system, "External Recommendation System", "Сторонняя ML рекомендательная система")
+System_Ext(payment_providers, "Payment Providers", "Платежные системы (Stripe, YooKassa)")
+System_Ext(content_providers, "Content Providers", "Поставщики контента (онлайн-кинотеатры)")
+System_Ext(analytics_service, "Analytics Service", "Сервис аналитики")
+
+' User to Clients
+Rel(user, web_app, "Использует", "HTTPS")
+Rel(user, mobile_app, "Использует", "HTTPS")
+Rel(user, tv_app, "Использует", "HTTPS")
+
+' Clients to API Gateway
+Rel(web_app, api_gateway, "API запросы", "HTTPS/REST")
+Rel(mobile_app, api_gateway, "API запросы", "HTTPS/REST")
+Rel(tv_app, api_gateway, "API запросы", "HTTPS/REST")
+
+' API Gateway to Services
+Rel(api_gateway, auth_service, "Маршрутизация", "HTTP/gRPC")
+Rel(api_gateway, user_profile_service, "Маршрутизация", "HTTP/gRPC")
+Rel(api_gateway, content_service, "Маршрутизация", "HTTP/gRPC")
+Rel(api_gateway, payment_service, "Маршрутизация", "HTTP/gRPC")
+Rel(api_gateway, recommendation_service, "Маршрутизация", "HTTP/gRPC")
+Rel(api_gateway, loyalty_service, "Маршрутизация", "HTTP/gRPC")
+
+' Services to Databases
+Rel(auth_service, user_db, "Читает/Пишет", "pgx")
+Rel(user_profile_service, user_db, "Читает/Пишет", "pgx")
+Rel(content_service, content_db, "Читает/Пишет", "pgx")
+Rel(content_service, video_storage, "Загружает/Получает видео", "S3 API")
+Rel(payment_service, payment_db, "Читает/Пишет", "pgx")
+Rel(recommendation_service, recommendation_db, "Читает/Пишет", "Redis/ClickHouse drivers")
+Rel(notification_service, notification_db, "Читает/Пишет", "pgx")
+Rel(loyalty_service, loyalty_db, "Читает/Пишет", "pgx")
+
+' Services to Kafka
+Rel(auth_service, kafka, "Публикует события", "Kafka Producer")
+Rel(content_service, kafka, "Публикует события", "Kafka Producer")
+Rel(payment_service, kafka, "Публикует события", "Kafka Producer")
+Rel(recommendation_service, kafka, "Подписка на события", "Kafka Consumer")
+Rel(notification_service, kafka, "Подписка на события", "Kafka Consumer")
+Rel(loyalty_service, kafka, "Pub/Sub", "Kafka")
+
+' External integrations
+Rel(recommendation_service, recommendation_system, "Получает ML модели", "HTTPS/REST")
+Rel(payment_service, payment_providers, "Процессинг платежей", "HTTPS/REST")
+Rel(content_service, content_providers, "Получает контент", "HTTPS/REST")
+Rel(notification_service, analytics_service, "Отправляет метрики", "HTTPS/REST")
+Rel(video_storage, cdn, "Раздача контента", "HTTPS")
+Rel(user, cdn, "Стриминг видео", "HTTPS/HLS")
+
+@enduml
