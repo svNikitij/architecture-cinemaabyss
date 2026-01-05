@@ -47,7 +47,7 @@ spring:
 
 cinemaabyss:
   strangler:
-    gradual-migration: ${GRADUAL_MIGRATION:false}
+    gradual-migration: ${GRADUAL_MIGRATION:true}
     movies-migration-percent: ${MOVIES_MIGRATION_PERCENT:0}
     monolith-url: ${MONOLITH_URL:http://localhost:8080}
     movies-service-url: ${MOVIES_SERVICE_URL:http://localhost:8081}
