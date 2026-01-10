@@ -1,0 +1,59 @@
+server:
+  port: ${PORT:8000}
+
+spring:
+  main:
+    web-application-type: reactive
+
+  cloud:
+    gateway:
+      httpclient:
+        connect-timeout: 3000
+        response-timeout: 10s
+
+      routes:
+        - id: events
+          uri: ${EVENTS_SERVICE_URL:http://localhost:8082}
+          predicates:
+            - Path=/api/events/**
+
+        - id: movies
+          # uri обязателен, но фактически будет переопределяться фильтром MoviesStrangler
+          uri: ${MONOLITH_URL:http://localhost:8080}
+          predicates:
+            - Path=/api/movies/**
+          filters:
+            - MoviesStrangler
+
+        - id: users
+          uri: ${MONOLITH_URL:http://localhost:8080}
+          predicates:
+            - Path=/api/users/**
+
+        - id: payments
+          uri: ${MONOLITH_URL:http://localhost:8080}
+          predicates:
+            - Path=/api/payments/**
+
+        - id: subscriptions
+          uri: ${MONOLITH_URL:http://localhost:8080}
+          predicates:
+            - Path=/api/subscriptions/**
+
+        - id: fallback
+          uri: ${MONOLITH_URL:http://localhost:8080}
+          predicates:
+            - Path=/**
+
+cinemaabyss:
+  strangler:
+    gradual-migration: ${GRADUAL_MIGRATION:true}
+    movies-migration-percent: ${MOVIES_MIGRATION_PERCENT:0}
+    monolith-url: ${MONOLITH_URL:http://localhost:8080}
+    movies-service-url: ${MOVIES_SERVICE_URL:http://localhost:8081}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

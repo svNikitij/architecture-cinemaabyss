@@ -1,0 +1,24 @@
+server:
+  port: 8082
+
+spring:
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+  kafka:
+    bootstrap-servers: kafka:9092
+    consumer:
+      group-id: cinemaabyss-events-service
+      auto-offset-reset: earliest
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    # consumer десериализует строку по умолчанию через StringDeserializer, но зададим явно:
+    properties:
+      key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value.deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+app:
+  kafka:
+    topic: cinemaabyss.events
+    partitions: 3
+    replicas: 1
