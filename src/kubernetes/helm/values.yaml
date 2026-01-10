@@ -7,7 +7,7 @@ global:
 imageCredentials:
   registry: ghcr.io
   username: svnikitij
-  password: "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"
+  password: "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"
   email: your-email@example.com
 #imagePullSecrets:
 #  dockerconfigjson: c3ZuaWtpdGlqOmdpdGh1Yl9wYXRfMTFBTjVFUE9JMHhIMVVCZXVBUWhGNl9INjhyb21LOWlGMVlLM2laQzN6OE1hTm04NVU1aVFRb2VEU25JSzJIMmJJUFhSNU5NNVJBVkh1RVRKcA==
